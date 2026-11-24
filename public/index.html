@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alethes Client Portal</title>
+<style>
+  /* Layout idea: a client's month-end binder. Ink masthead with the family and period,
+     a tab rail for the five views, ivory pages with statement-style tables. Gold marks totals only. */
+  :root {
+    color-scheme: light;
+    --ink: #14213D; --ink-2: #1C2E4A;
+    --ivory: #FBF7EF; --porcelain: #F6F0E6; --sand: #E7DCCB;
+    --gold: #C6A15B; --gold-deep: #A8894A;
+    --sage: #6F8A7A; --copper: #B66A3C; --terra: #9A3B34; --blue: #7DA8BA; --lavender: #6D6388;
+    --slate: #4B5563; --charcoal: #26343D; --card: #FFFFFF;
+    --display: Georgia, 'Times New Roman', serif;
+    --body: Arial, Helvetica, sans-serif;
+    --gutter: clamp(16px, 4vw, 40px);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ivory); color: var(--slate); font: 15px/1.5 var(--body); }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; color: var(--charcoal); margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  button, select { font: inherit; }
+  :focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 2px; border-radius: 2px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--gutter); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .proto { background: var(--copper); color: #fff; font-size: 13px; padding: 7px 0; }
+  .proto .wrap { display: flex; gap: 6px 18px; flex-wrap: wrap; justify-content: space-between; }
+  .proto b { letter-spacing: .08em; text-transform: uppercase; font-size: 11px; }
+
+  .mast { background: var(--ink); color: var(--sand); }
+  .mast .top { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; padding-top: 4px; }
+  .logo { width: 200px; margin: -18px -14px -18px -18px; flex: none; }
+  .logo svg { display: block; width: 100%; height: auto; }
+  .who { font-size: 13px; text-align: right; }
+  .who span { display: block; color: var(--ivory); }
+  .period { display: flex; align-items: end; justify-content: space-between; gap: 16px 32px; flex-wrap: wrap; padding: 22px 0 22px; }
+  .period .k { font: 700 11px/1 var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+  .period h1 { color: var(--ivory); font-size: clamp(26px, 3.4vw, 36px); line-height: 1.15; margin-top: 8px; }
+  .period label { display: grid; gap: 6px; font: 700 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--sand); }
+  .period select { background: var(--ink-2); color: var(--ivory); border: 1px solid rgba(231,220,203,.35); border-radius: 3px; padding: 9px 12px; min-width: 150px; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 15px; }
+  .tabs { display: flex; gap: 2px; overflow-x: auto; }
+  .tabs a { flex: none; text-decoration: none; color: var(--sand); padding: 12px 16px; font-size: 14px; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .tabs a:hover { color: var(--ivory); }
+  .tabs a[aria-current="page"] { color: var(--ivory); border-bottom-color: var(--gold); background: var(--ink-2); }
+
+  main.wrap { padding-top: clamp(24px, 3.5vw, 40px); padding-bottom: 56px; }
+  .view { display: none; }
+  .view.on { display: grid; gap: 24px; }
+  .vh { display: grid; gap: 6px; }
+  .vh h2 { font-size: clamp(24px, 2.8vw, 30px); }
+  .vh p { max-width: 70ch; }
+
+  .card { background: var(--card); border: 1px solid var(--sand); border-radius: 4px; padding: 20px 22px; min-width: 0; }
+  .card > h3 { font-size: 19px; margin-bottom: 12px; }
+  .lbl { font: 700 11px/1.3 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--charcoal); }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+
+  .hero { border-top: 3px solid var(--gold-deep); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px 40px; align-items: center; }
+  .big { font: 400 clamp(36px, 5vw, 52px)/1.05 var(--display); color: var(--ink); margin-top: 8px; }
+  .delta { margin-top: 10px; font-size: 14px; }
+  .delta b { color: var(--sage); }
+  .delta b.down { color: var(--terra); }
+  .split { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--sand); margin-top: 16px; }
+  .split div { padding: 12px 12px 0 0; }
+  .split div + div { padding-left: 14px; border-left: 1px solid var(--sand); }
+  .split .v { font: 400 20px/1.2 var(--display); color: var(--ink); margin-top: 4px; }
+  svg text { font-family: var(--body); }
+
+  .bars { display: grid; gap: 12px; }
+  .bar .row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--charcoal); }
+  .bar .row span:last-child { color: var(--slate); }
+  .track { height: 10px; background: var(--porcelain); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+  .track i { display: block; height: 100%; border-radius: 2px; }
+
+  ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+  ul.plain li { padding: 10px 0; border-top: 1px solid var(--sand); font-size: 14.5px; }
+  ul.plain li:first-child { border-top: 0; padding-top: 0; }
+  .up { display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
+  .up .d { color: var(--charcoal); font-weight: 700; font-size: 13px; }
+  .up .a { color: var(--ink); white-space: nowrap; }
+  .mv { display: flex; justify-content: space-between; gap: 12px; }
+  .pos { color: var(--sage); } .neg { color: var(--terra); }
+
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 8px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--sand); font-weight: 400; }
+  tbody th, thead th:first-child { text-align: left; }
+  thead th { background: var(--ink); color: var(--ivory); font: 400 14px/1.3 var(--display); vertical-align: bottom; border-bottom: 0; }
+  thead .k { display: block; font: 700 10px/1.6 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  tbody th { color: var(--charcoal); }
+  td.t, th.t { font-weight: 700; color: var(--ink); }
+  thead th.t { color: var(--ivory); font-weight: 400; }
+  td.note, th.note { text-align: left; white-space: normal; min-width: 170px; font-size: 13px; color: var(--slate); padding-left: 18px; }
+  thead th.note { color: var(--sand); }
+  tr.grp th { font: 700 11px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; background: var(--porcelain); padding: 11px 10px; }
+  tr.sum th, tr.sum td { font-weight: 700; color: var(--ink); border-top: 1px solid var(--ink); }
+  tr.net th, tr.net td { font-weight: 700; color: var(--ink); font-size: 15px; border-top: 2px solid var(--gold-deep); border-bottom: 2px solid var(--gold-deep); background: var(--ivory); }
+  tr.chk th, tr.chk td { color: var(--sage); font-size: 13px; border-bottom: 0; }
+  td.l { text-align: left; }
+  .pill { display: inline-block; font: 700 10px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; padding: 4px 7px; border-radius: 2px; background: var(--porcelain); color: var(--charcoal); border: 1px solid var(--sand); }
+  .foot { font-size: 12.5px; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--sand); background: var(--card); color: var(--charcoal); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; cursor: pointer; }
+  .chip:hover { border-color: var(--gold-deep); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--ivory); }
+  .docbtn { border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 3px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .docbtn:hover { background: var(--porcelain); }
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: var(--ivory); padding: 10px 16px; border-radius: 3px; border-left: 3px solid var(--gold); font-size: 13.5px; max-width: 90%; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .toast.on { opacity: 1; }
+
+  #cls select { border: 1px solid var(--sand); background: var(--card); color: var(--charcoal); border-radius: 3px; padding: 5px 8px; font-size: 13.5px; max-width: 190px; }
+  #cls select.changed { border-color: var(--gold-deep); background: #FBF3DF; box-shadow: inset 3px 0 0 var(--gold-deep); }
+  #cls select:disabled { color: var(--slate); background: var(--porcelain); }
+  #cls td.l { white-space: nowrap; }
+  .pill.wait { background: #FBF3DF; border-color: var(--gold-deep); color: var(--charcoal); }
+  .sendbar { border-top: 3px solid var(--gold-deep); }
+  #cls input[type=text] { border: 1px solid var(--sand); border-radius: 3px; padding: 5px 8px; font: inherit; font-size: 13.5px; color: var(--charcoal); width: 190px; }
+  .pill.ok { background: #E9F0EB; border-color: var(--sage); color: #3F5A4B; } .pill.no { background: #F6E7E4; border-color: var(--terra); color: var(--terra); }
+  .switch { display: flex; gap: 6px; align-items: center; }
+  .switch a { color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.6); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+  .switch a[aria-current] { background: #fff; color: var(--copper); font-weight: 700; }
+  .staffhead { display: none; padding: 22px 0 26px; }
+  .staffhead .k { font: 700 11px/1 var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+  .staffhead h1 { color: var(--ivory); font-size: clamp(26px, 3.4vw, 36px); line-height: 1.15; margin-top: 8px; }
+  body.staff .period, body.staff .tabs, body.staff .who { display: none; }
+  body.staff .staffhead { display: block; }
+  #queue td.l { white-space: normal; min-width: 150px; } #queue input { width: 17px; height: 17px; accent-color: var(--ink); }
+  #queue td:first-child, #queue th:first-child { text-align: left; width: 34px; }
+  button:disabled { opacity: .45; cursor: default; }
+  input.reason { width: 100%; max-width: 640px; border: 1px solid var(--sand); border-radius: 3px; padding: 8px 10px; font: inherit; color: var(--charcoal); }
+  #history td.w { white-space: normal; min-width: 200px; } #history th[scope=row] { white-space: nowrap; font-size: 13px; }
+  .mail { border: 1px solid var(--sand); border-radius: 3px; background: var(--ivory); padding: 14px 16px; font-size: 14px; }
+  .mail .h { color: var(--charcoal); border-bottom: 1px solid var(--sand); padding-bottom: 8px; margin-bottom: 10px; }
+  .mail .h b { display: inline-block; width: 62px; color: var(--slate); font-weight: 400; }
+  .mail ul { margin: 8px 0; padding-left: 18px; }
+  .sendbar textarea { width: 100%; border: 1px solid var(--sand); border-radius: 3px; padding: 8px 10px; font: inherit; color: var(--charcoal); resize: vertical; }
+  .sendacts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .btn-ink { background: var(--ink); color: var(--ivory); border: 1px solid var(--ink); border-radius: 3px; padding: 9px 16px; font-weight: 700; font-size: 13.5px; letter-spacing: .03em; cursor: pointer; }
+  .btn-ink:hover { background: var(--ink-2); }
+  .chg b { color: var(--ink); }
+  [hidden] { display: none !important; }
+  .pickers { display: flex; gap: 14px; flex-wrap: wrap; }
+  .who .out { display: inline-block; margin-top: 4px; color: var(--sand); font-size: 12.5px; text-underline-offset: 3px; }
+  #cls th, #cls td, #history th, #history td { padding: 7px 6px; font-size: 13px; }
+  #cls select { padding: 4px 3px; font-size: 13px; max-width: 128px; }
+  #cls input[type=text] { width: 96px; font-size: 13px; padding: 4px 6px; }
+  #history td, #history tbody th { white-space: normal; vertical-align: top; overflow-wrap: anywhere; min-width: 0; }
+  #history td.w { min-width: 120px; }
+  #history td .pill { white-space: nowrap; }
+  .loaderr { background: #F6E7E4; border: 1px solid var(--terra); color: var(--terra); border-radius: 3px; padding: 12px 14px; margin-bottom: 20px; }
+  @media (max-width: 880px) {
+    .grid2, .grid3, .hero { grid-template-columns: minmax(0, 1fr); }
+    td.note, th.note { display: none; }
+    .who { text-align: left; }
+  }
+  @media (max-width: 480px) {
+    .up { grid-template-columns: minmax(0, 1fr) auto; } .up .d { grid-column: 1 / -1; }
+    .card { padding: 16px 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="proto"><div class="wrap"><span><b>Test build</b> &nbsp;Sample families only. No client data is loaded.</span><span class="switch" id="switch" hidden>View as <a href="#overview" id="sw-client">Client</a><a href="#review" id="sw-staff">Alethes staff</a></span></div></div>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="top">
+      <div class="logo" role="img" aria-label="Alethes Financial, LLC"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-60.0 -60.0 747.0 290.0" role="img" aria-label="Alethes Financial, LLC logo, horizontal, reversed">
+  <title>Alethes Financial, LLC logo, horizontal, reversed</title>
+  
+  <g transform="translate(-10.20 -8.50) scale(0.85)"><mask id="g5" maskUnits="userSpaceOnUse" x="-40" y="-40" width="280" height="300"><rect x="-40" y="-40" width="280" height="300" fill="white"/><rect x="-40" y="137" width="280" height="31" fill="black"/></mask><path d="M89 10 L111 10 L180 210 L146 210 L100 77 L54 210 L20 210 Z" fill="#FBF7EF" mask="url(#g5)"/><rect x="12" y="146" width="176" height="13" fill="#C6A15B"/></g><path d="M251.56 89.04H230.78V86.54Q233.52 86.36 235.33 85.84Q237.14 85.31 237.14 84.54Q237.14 84.22 237.07 83.76Q237.00 83.31 236.86 82.95L232.71 71.77H215.24Q214.26 74.24 213.64 76.06Q213.03 77.89 212.53 79.44Q212.08 80.95 211.90 81.90Q211.72 82.85 211.72 83.45Q211.72 84.85 213.94 85.63Q216.15 86.40 218.93 86.54V89.04H200.16V86.54Q201.07 86.47 202.44 86.14Q203.81 85.80 204.69 85.24Q206.10 84.29 206.87 83.25Q207.65 82.22 208.39 80.39Q212.15 71.00 216.68 59.29Q221.22 47.59 224.77 38.45H227.58L244.21 81.48Q244.74 82.85 245.40 83.69Q246.07 84.54 247.27 85.34Q248.08 85.84 249.38 86.17Q250.68 86.50 251.56 86.54ZM231.45 68.65 223.89 49.31 216.47 68.65Z M309.39 74.20 308.34 89.04H269.35V86.54Q270.19 86.47 271.79 86.29Q273.39 86.12 274.03 85.84Q275.08 85.38 275.56 84.50Q276.03 83.62 276.03 82.25V46.53Q276.03 45.34 275.63 44.42Q275.22 43.51 274.03 42.95Q273.22 42.52 271.76 42.12Q270.30 41.72 269.35 41.65V39.15H290.41V41.65Q289.42 41.68 287.86 42.00Q286.30 42.31 285.59 42.56Q284.40 42.98 283.96 44.00Q283.52 45.02 283.52 46.18V79.68Q283.52 82.00 283.75 83.29Q283.98 84.57 284.82 85.27Q285.63 85.91 287.23 86.10Q288.83 86.29 291.71 86.29Q293.01 86.29 294.42 86.22Q295.82 86.15 297.09 85.94Q298.32 85.73 299.36 85.36Q300.39 84.99 300.89 84.43Q302.33 82.81 304.24 79.53Q306.16 76.24 306.90 74.20Z M370.74 74.34 369.80 89.04H328.38V86.54Q329.44 86.47 331.19 86.24Q332.95 86.01 333.48 85.77Q334.60 85.24 335.04 84.40Q335.48 83.55 335.48 82.25V46.39Q335.48 45.23 335.10 44.33Q334.71 43.44 333.48 42.88Q332.53 42.42 330.93 42.07Q329.33 41.72 328.38 41.65V39.15H366.98V51.17H364.35Q363.64 48.50 361.31 45.49Q358.97 42.49 356.86 42.21Q355.77 42.07 354.26 42.00Q352.74 41.93 350.81 41.93H342.97V61.75H348.60Q351.30 61.75 352.55 61.24Q353.80 60.74 354.75 59.54Q355.52 58.52 356.07 56.82Q356.61 55.11 356.79 53.60H359.42V73.11H356.79Q356.65 71.42 356.03 69.54Q355.42 67.66 354.75 66.82Q353.66 65.45 352.27 65.02Q350.88 64.60 348.60 64.60H342.97V79.58Q342.97 81.83 343.29 83.13Q343.60 84.43 344.52 85.10Q345.43 85.77 347.01 85.96Q348.60 86.15 351.51 86.15Q352.67 86.15 354.57 86.15Q356.47 86.15 357.77 86.01Q359.11 85.87 360.53 85.50Q361.96 85.13 362.55 84.50Q364.17 82.81 365.95 79.39Q367.72 75.96 368.21 74.34Z M432.38 52.68H429.95Q429.64 51.42 428.81 49.68Q427.98 47.94 426.96 46.39Q425.91 44.77 424.66 43.56Q423.41 42.35 422.25 42.17Q421.16 42.03 419.51 41.96Q417.86 41.89 416.45 41.89H414.41V81.79Q414.41 82.95 414.90 83.92Q415.40 84.89 416.63 85.41Q417.26 85.66 419.28 86.08Q421.30 86.50 422.43 86.54V89.04H398.87V86.54Q399.86 86.47 401.88 86.26Q403.90 86.05 404.67 85.73Q405.83 85.27 406.38 84.41Q406.92 83.55 406.92 82.11V41.89H404.89Q403.80 41.89 402.18 41.94Q400.56 42.00 399.08 42.17Q397.92 42.31 396.68 43.56Q395.43 44.81 394.37 46.39Q393.32 47.97 392.51 49.75Q391.70 51.52 391.39 52.68H388.92V39.15H432.38Z M504.03 89.04H483.32V86.54Q484.17 86.47 485.77 86.33Q487.37 86.19 487.96 85.91Q489.02 85.49 489.51 84.62Q490.00 83.76 490.00 82.39V64.64H466.55V82.00Q466.55 83.24 466.96 84.08Q467.36 84.92 468.56 85.56Q469.15 85.87 470.68 86.19Q472.21 86.50 473.09 86.54V89.04H452.39V86.54Q453.23 86.47 454.83 86.33Q456.43 86.19 457.03 85.91Q458.08 85.49 458.57 84.62Q459.06 83.76 459.06 82.39V46.39Q459.06 45.27 458.61 44.33Q458.15 43.40 457.03 42.88Q456.08 42.42 454.72 42.07Q453.37 41.72 452.39 41.65V39.15H473.09V41.65Q472.11 41.68 470.68 41.96Q469.26 42.24 468.56 42.49Q467.36 42.91 466.96 43.90Q466.55 44.88 466.55 46.04V61.51H490.00V46.39Q490.00 45.27 489.55 44.33Q489.09 43.40 487.96 42.88Q487.01 42.42 485.66 42.07Q484.31 41.72 483.32 41.65V39.15H504.03V41.65Q503.05 41.68 501.62 41.96Q500.20 42.24 499.49 42.49Q498.30 42.91 497.89 43.90Q497.49 44.88 497.49 46.04V82.00Q497.49 83.24 497.89 84.08Q498.30 84.92 499.49 85.56Q500.09 85.87 501.62 86.19Q503.15 86.50 504.03 86.54Z M569.00 74.34 568.05 89.04H526.64V86.54Q527.69 86.47 529.45 86.24Q531.21 86.01 531.74 85.77Q532.86 85.24 533.30 84.40Q533.74 83.55 533.74 82.25V46.39Q533.74 45.23 533.35 44.33Q532.97 43.44 531.74 42.88Q530.79 42.42 529.19 42.07Q527.59 41.72 526.64 41.65V39.15H565.24V51.17H562.60Q561.90 48.50 559.56 45.49Q557.23 42.49 555.12 42.21Q554.03 42.07 552.51 42.00Q551.00 41.93 549.07 41.93H541.23V61.75H546.85Q549.56 61.75 550.81 61.24Q552.06 60.74 553.01 59.54Q553.78 58.52 554.32 56.82Q554.87 55.11 555.05 53.60H557.68V73.11H555.05Q554.90 71.42 554.29 69.54Q553.67 67.66 553.01 66.82Q551.92 65.45 550.53 65.02Q549.14 64.60 546.85 64.60H541.23V79.58Q541.23 81.83 541.55 83.13Q541.86 84.43 542.78 85.10Q543.69 85.77 545.27 85.96Q546.85 86.15 549.77 86.15Q550.93 86.15 552.83 86.15Q554.73 86.15 556.03 86.01Q557.37 85.87 558.79 85.50Q560.21 85.13 560.81 84.50Q562.43 82.81 564.20 79.39Q565.98 75.96 566.47 74.34Z M621.14 66.15Q622.73 67.91 623.48 70.00Q624.24 72.09 624.24 74.87Q624.24 81.48 619.35 85.77Q614.46 90.06 607.22 90.06Q603.88 90.06 600.54 89.02Q597.20 87.98 594.78 86.50L593.26 89.07H590.45L589.96 71.99H592.81Q593.69 75.15 594.86 77.70Q596.04 80.25 597.98 82.46Q599.80 84.54 602.25 85.77Q604.69 87.00 607.92 87.00Q610.35 87.00 612.16 86.36Q613.97 85.73 615.10 84.57Q616.22 83.41 616.77 81.85Q617.31 80.28 617.31 78.24Q617.31 75.25 615.62 72.67Q613.94 70.09 610.60 68.75Q608.31 67.84 605.36 66.73Q602.40 65.62 600.26 64.64Q596.04 62.74 593.70 59.66Q591.37 56.59 591.37 51.63Q591.37 48.78 592.53 46.32Q593.69 43.86 595.83 41.93Q597.87 40.10 600.65 39.06Q603.42 38.02 606.45 38.02Q609.89 38.02 612.62 39.08Q615.34 40.13 617.59 41.54L619.03 39.15H621.85L622.13 55.71H619.28Q618.51 52.86 617.54 50.26Q616.57 47.66 615.03 45.55Q613.51 43.51 611.33 42.30Q609.15 41.08 605.99 41.08Q602.65 41.08 600.30 43.23Q597.94 45.37 597.94 48.47Q597.94 51.70 599.45 53.83Q600.96 55.95 603.85 57.33Q606.41 58.56 608.89 59.45Q611.37 60.35 613.69 61.37Q615.80 62.28 617.75 63.44Q619.70 64.60 621.14 66.15Z" fill="#FBF7EF"/><path d="M203.40 130.79V115.04H214.03V116.90H205.49V121.78H212.88V123.63H205.49V130.79Z M225.09 130.79V115.04H227.17V130.79Z M238.83 130.79V115.04H240.96L249.24 127.40V115.04H251.23V130.79H249.10L240.82 118.41V130.79Z M261.01 130.79 267.05 115.04H269.30L275.74 130.79H273.37L271.53 126.02H264.95L263.22 130.79ZM265.55 124.32H270.89L269.25 119.96Q268.49 117.97 268.13 116.69Q267.83 118.21 267.28 119.70Z M285.39 130.79V115.04H287.53L295.80 127.40V115.04H297.80V130.79H295.66L287.39 118.41V130.79Z M320.53 125.27 322.62 125.79Q321.96 128.36 320.26 129.71Q318.56 131.06 316.10 131.06Q313.55 131.06 311.96 130.02Q310.36 128.98 309.53 127.02Q308.70 125.05 308.70 122.80Q308.70 120.34 309.64 118.50Q310.58 116.67 312.31 115.72Q314.05 114.77 316.13 114.77Q318.49 114.77 320.10 115.97Q321.72 117.18 322.35 119.36L320.30 119.84Q319.75 118.12 318.71 117.34Q317.67 116.55 316.09 116.55Q314.27 116.55 313.05 117.42Q311.83 118.29 311.34 119.76Q310.84 121.23 310.84 122.79Q310.84 124.79 311.43 126.29Q312.02 127.79 313.25 128.53Q314.49 129.27 315.93 129.27Q317.68 129.27 318.89 128.26Q320.10 127.25 320.53 125.27Z M333.54 130.79V115.04H335.62V130.79Z M345.57 130.79 351.62 115.04H353.86L360.31 130.79H357.93L356.10 126.02H349.51L347.78 130.79ZM350.11 124.32H355.45L353.81 119.96Q353.06 117.97 352.69 116.69Q352.39 118.21 351.84 119.70Z M369.89 130.79V115.04H371.97V128.93H379.73V130.79Z M390.46 130.79V128.59H392.67V130.79Q392.67 132.00 392.24 132.75Q391.81 133.50 390.87 133.90L390.34 133.08Q390.95 132.81 391.24 132.29Q391.53 131.77 391.56 130.79Z  M418.35 130.79V115.04H420.43V128.93H428.18V130.79Z M438.58 130.79V115.04H440.66V128.93H448.42V130.79Z M470.14 125.27 472.22 125.79Q471.57 128.36 469.86 129.71Q468.16 131.06 465.70 131.06Q463.16 131.06 461.56 130.02Q459.97 128.98 459.13 127.02Q458.30 125.05 458.30 122.80Q458.30 120.34 459.24 118.50Q460.18 116.67 461.91 115.72Q463.65 114.77 465.73 114.77Q468.10 114.77 469.71 115.97Q471.32 117.18 471.95 119.36L469.90 119.84Q469.35 118.12 468.31 117.34Q467.27 116.55 465.69 116.55Q463.88 116.55 462.66 117.42Q461.44 118.29 460.94 119.76Q460.45 121.23 460.45 122.79Q460.45 124.79 461.03 126.29Q461.62 127.79 462.85 128.53Q464.09 129.27 465.53 129.27Q467.28 129.27 468.49 128.26Q469.71 127.25 470.14 125.27Z" fill="#E7DCCB"/>
+</svg>
+</div>
+      <p class="who">Signed in as<span id="email"></span><a class="out" href="/cdn-cgi/access/logout">Sign out</a></p>
+    </div>
+    <div class="period">
+      <div>
+        <span class="k">Client portal</span>
+        <h1 id="fam"></h1>
+      </div>
+      <div class="pickers">
+        <label for="family" id="famwrap" hidden>Family
+          <select id="family"></select>
+        </label>
+        <label for="month">Month-end
+          <select id="month"></select>
+        </label>
+      </div>
+    </div>
+    <div class="staffhead"><span class="k">Alethes staff only</span><h1>Classification requests</h1></div>
+    <nav class="tabs" aria-label="Portal sections">
+      <a href="#overview">Overview</a>
+      <a href="#estate-summary">Estate summary</a>
+      <a href="#allocation">Asset allocation</a>
+      <a href="#private-investments">Private investments</a>
+      <a href="#documents">Documents</a>
+      <a href="#classifications">Classifications</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p id="loaderr" class="loaderr" role="alert" hidden></p>
+  <section class="view" id="v-overview" aria-labelledby="h-ov">
+    <div class="card hero">
+      <div>
+        <span class="lbl" id="h-ov">Net worth</span>
+        <div class="big num" id="nw"></div>
+        <p class="delta" id="nwd"></p>
+        <div class="split" id="split"></div>
+      </div>
+      <div>
+        <span class="lbl">Net worth, last six month-ends</span>
+        <div id="trend" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>By legal entity</h3><div class="bars" id="byent"></div></div>
+      <div class="card"><h3>Largest changes this month</h3><ul class="plain" id="movers"></ul></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Notes from Alethes</h3><ul class="plain" id="notes"></ul></div>
+      <div class="card"><h3>Coming up</h3><ul class="plain" id="upcoming"></ul></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-estate-summary" aria-labelledby="h-es">
+    <div class="vh"><h2 id="h-es">Estate summary</h2><p>Assets and liabilities by type and by legal entity, as of <span class="asof"></span>.</p></div>
+    <div class="card"><div class="scroll"><table id="estate"></table></div></div>
+  </section>
+
+  <section class="view" id="v-allocation" aria-labelledby="h-al">
+    <div class="vh"><h2 id="h-al">Asset allocation</h2><p>Total assets by class, before liabilities, as of <span class="asof"></span>.</p></div>
+    <div class="grid2">
+      <div class="card"><h3>By asset class</h3><div class="bars" id="alloc"></div></div>
+      <div class="card"><h3>Liquid and illiquid</h3><div class="bars" id="liq"></div><p class="foot" style="margin-top:14px">Liquid assets can usually be reached within days. Illiquid assets are committed to private funds, property and vehicles.</p></div>
+    </div>
+    <div class="card"><h3>Class by entity</h3><div class="scroll"><table id="alloctable"></table></div></div>
+  </section>
+
+  <section class="view" id="v-private-investments" aria-labelledby="h-pi">
+    <div class="vh"><h2 id="h-pi">Private investments</h2><p>Each fund's commitment, what has been paid in and returned, and its latest reported value. Private values lag; the statement date is shown for each.</p></div>
+    <div class="grid3" id="pistats"></div>
+    <div class="card"><div class="scroll"><table id="funds"></table></div><p class="foot" style="margin-top:12px">Values are as reported by each manager and are shown in the estate summary at the same amounts.</p></div>
+  </section>
+
+  <section class="view" id="v-documents" aria-labelledby="h-do">
+    <div class="vh"><h2 id="h-do">Documents</h2><p>Reports and records Alethes has posted for your family.</p></div>
+    <div class="filters" id="docfilters" role="group" aria-label="Filter documents by category"></div>
+    <div class="card"><div class="scroll"><table id="docs"></table></div></div>
+  </section>
+  <section class="view" id="v-classifications" aria-labelledby="h-cl">
+    <div class="vh"><h2 id="h-cl">Classifications</h2><p>How each account is grouped in your reports. You can ask for a change to an account's bucket, asset class, liquidity or investment type. Requests go to Alethes for review, and your reports change only after a request is approved. Notes you add are saved right away.</p></div>
+    <p class="foot" id="clsro" hidden>Staff view is read-only. Clients request changes from their own sign-in.</p>
+    <div class="filters" id="clsfilters" role="group" aria-label="Filter accounts by entity"></div>
+    <div class="card"><div class="scroll"><table id="cls"></table></div></div>
+    <div class="card sendbar" id="sendbar" hidden>
+      <h3 id="sendcount"></h3>
+      <ul class="plain" id="sendlist"></ul>
+      <label class="lbl" for="sendnote" style="display:block;margin:14px 0 6px">Note to Alethes (optional)</label>
+      <textarea id="sendnote" rows="2" placeholder="Why you'd like this changed"></textarea>
+      <div class="sendacts"><button type="button" class="btn-ink" id="sendbtn">Send to Alethes for review</button><button type="button" class="docbtn" id="discardbtn">Discard changes</button></div>
+    </div>
+    <div class="card"><h3 id="pendingtitle">Your requests</h3><ul class="plain" id="pending"></ul></div>
+  </section>
+
+  <section class="view" id="v-review" aria-labelledby="h-rv">
+    <div class="vh"><h2 id="h-rv">Waiting for your decision</h2><p>Tick the changes you want to apply and approve them. Anything you leave unticked stays in the queue. Approved changes update the family's classifications and reports in the portal; declined ones change nothing. Every decision is logged.</p></div>
+    <div class="card">
+      <div class="scroll"><table id="queue"></table></div>
+      <label class="lbl" for="decnote" style="display:block;margin:16px 0 6px">Reason for your decision (optional, logged and shown to the client)</label>
+      <input type="text" id="decnote" class="reason" placeholder="For example: agreed, matches how the fund reports itself">
+      <div class="sendacts"><button type="button" class="btn-ink" id="approvebtn">Approve selected</button><button type="button" class="docbtn" id="declinebtn">Decline selected</button><span class="foot" id="pickcount" style="align-self:center"></span></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Email alert</h3><p>Email alerts are not connected in this test build. They are added once sending is set up for your domain.</p></div>
+      <div class="card"><h3>Client notes</h3><p class="foot" style="margin-bottom:10px">Notes save without review and appear here.</p><ul class="plain" id="notelog"></ul></div>
+    </div>
+    <div class="card"><h3>Change history</h3><p class="foot" style="margin-bottom:10px">Every decision, with who asked, when, and why. Approved changes update the portal's own data in this test build. Writing them to the Master Ledger comes in the next phase.</p><div class="scroll"><table id="history"></table></div></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

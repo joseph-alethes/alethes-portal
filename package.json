@@ -1,0 +1,23 @@
+{
+  "name": "alethes-portal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev --local"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jose": "^6.2.18"
+  },
+  "devDependencies": {
+    "wrangler": "^4.167.0"
+  },
+  "private": true
+}
