@@ -1,3 +1,4 @@
+let LINKS = {};
 // Portal page script. All data comes from the Worker's /api routes; nothing is embedded in the page.
 let D = null, ME = null, OPT = null, FAMS = [], FAMID = null, REV = null;
 const $ = (id) => document.getElementById(id);
@@ -153,7 +154,7 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add
 
 // ---- loading and routing
 function hydrate(p) {
-  D = p.data; ME = p.me; OPT = p.options; FAMS = p.families || []; FAMID = p.familyId; reqs = p.requests;
+  D = p.data; ME = p.me; LINKS = p.links || {}; OPT = p.options; FAMS = p.families || []; FAMID = p.familyId; reqs = p.requests;
   ACC = D.accounts.map((a, i) => ({ i, id: a.id, name: a.name, ent: a.ent, value: a.value, note: a.note || '', cur: { bucket: a.bucket, cls: a.cls, liq: a.liq, inv: a.inv } }));
   edits = {};
   if (mi >= D.months.length) mi = 0;
@@ -164,6 +165,7 @@ function paintAll() {
   $('month').innerHTML = D.months.map((m, i) => '<option value="' + i + '"' + (i === mi ? ' selected' : '') + '>' + esc(m.label) + '</option>').join('');
   const staff = ME.role === 'staff';
   $('switch').hidden = !staff; $('famwrap').hidden = !staff;
+  const tr = $('sw-tracker'); tr.hidden = !(staff && LINKS.tracker); if (!tr.hidden) tr.href = LINKS.tracker;
   if (staff) $('family').innerHTML = FAMS.map((f) => '<option value="' + esc(f.id) + '"' + (f.id === FAMID ? ' selected' : '') + '>' + esc(f.name) + '</option>').join('');
   render(); renderFunds(); renderDocs(); renderCls(); renderReview(); route();
 }

@@ -10,6 +10,8 @@
   "vars": {
     // Filled in during setup: your Cloudflare Access team address and the portal application's audience tag.
     "TEAM_DOMAIN": "https://alethes-portal.cloudflareaccess.com",
+    // Staff-only link shown in the Alethes staff bar. Opens only for alethesfinancial.com Google accounts.
+    "TRACKER_URL": "https://script.google.com/a/macros/alethesfinancial.com/s/AKfycbz15HVMymlIETcxxYzIjxcLZV2j4ndWG9AuBR24cUvhLd6v627SuxuN-ZkGkNZ5NWkJ/exec",
     "POLICY_AUD": "3b98fc35eb7d3c6dc2df77a8dd16a3eb95f3a6ebc067c53e94b47f4bed4fd3d5"
   }
 }

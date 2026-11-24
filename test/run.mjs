@@ -88,6 +88,8 @@ const w3 = await call('/api/portal', T.whitlock);
 ok('declined change alters nothing', w3.data.data.accounts.find((a) => a.name === 'Coastal bond ladder').cls === 'Fixed income' && w3.data.requests.find((r) => r.id === rBond.id).st === 'no');
 const sw = await call('/api/portal?family=whitlock', T.staff);
 ok('staff can open any family', sw.data.data.family === 'Whitlock family' && sw.data.families.length === 2);
+ok('staff gets the tracker link', /^https:\/\/script\.google\.com\//.test(sw.data.links?.tracker || ''));
+ok('client gets no tracker link', h.data.links === undefined && !h.text.includes('script.google.com'));
 ok('bad decide input refused', (await call('/api/review/decide', T.staff, { ids: ['1'], decision: 'approve' })).status === 400 && (await call('/api/review/decide', T.staff, { ids: [1], decision: 'maybe' })).status === 400);
 ok('unknown route', (await call('/api/nope', T.staff)).status === 404);
 console.log(`${pass} passed, ${fail} failed`);

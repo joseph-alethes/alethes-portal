@@ -54,7 +54,7 @@ const REQ_SELECT = `SELECT r.id, r.family_id AS family, f.name AS familyName, r.
   r.decided_at AS decided, r.decided_by AS "by", r.reason AS why
   FROM requests r JOIN accounts a ON a.id = r.account_id JOIN families f ON f.id = r.family_id`;
 
-async function getPortal(db, user, url) {
+async function getPortal(db, user, url, env) {
   let familyId = user.family_id, families;
   if (user.role === 'staff') {
     families = (await db.prepare('SELECT id, name FROM families ORDER BY name').all()).results;
@@ -66,7 +66,8 @@ async function getPortal(db, user, url) {
   const bundle = await familyBundle(db, familyId);
   if (!bundle) return deny(404, 'Family not found.');
   const requests = (await db.prepare(REQ_SELECT + ' WHERE r.family_id = ? ORDER BY r.id').bind(familyId).all()).results;
-  return json({ me: { email: user.email, role: user.role }, families, familyId, data: bundle.data, options: bundle.options, requests });
+  const links = user.role === 'staff' && /^https:\/\/script\.google\.com\//.test(env.TRACKER_URL || '') ? { tracker: env.TRACKER_URL } : undefined;
+  return json({ me: { email: user.email, role: user.role }, links, families, familyId, data: bundle.data, options: bundle.options, requests });
 }
 
 async function postRequests(db, user, request) {
@@ -155,7 +156,7 @@ export default {
     if (url.pathname.startsWith('/api/')) {
       const route = request.method + ' ' + url.pathname;
       if (request.method !== 'GET' && !isOwnWrite(request)) return deny(403, 'This change did not come from the portal page.');
-      if (route === 'GET /api/portal') return getPortal(env.DB, user, url);
+      if (route === 'GET /api/portal') return getPortal(env.DB, user, url, env);
       if (route === 'POST /api/requests') return postRequests(env.DB, user, request);
       if (route === 'POST /api/notes') return postNote(env.DB, user, request);
       if (url.pathname.startsWith('/api/review')) {

@@ -12,6 +12,7 @@ rep('%%LOGO%%',logo)
 rep('<title>Alethes Client Portal Prototype</title>','<title>Alethes Client Portal</title>')
 rep('<span><b>Prototype</b> &nbsp;All names and figures are invented. No client data is shown.</span>','<span><b>Test build</b> &nbsp;Sample families only. No client data is loaded.</span>')
 rep('<span class="switch">View as ','<span class="switch" id="switch" hidden>View as ')
+rep('<a href="#review" id="sw-staff">Alethes staff</a>','<a href="#review" id="sw-staff">Alethes staff</a><a id="sw-tracker" target="_blank" rel="noopener noreferrer" hidden>Work Tracker &#8599;</a>')
 rep('<p class="who">Signed in as<span>sample.client@example.com</span></p>','<p class="who">Signed in as<span id="email"></span><a class="out" href="https://alethes-portal.cloudflareaccess.com/cdn-cgi/access/logout">Sign out</a></p>')
 rep('''      <label for="month">Month-end
         <select id="month"></select>
