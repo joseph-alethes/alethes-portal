@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler d1 migrations apply alethes-portal --remote && wrangler deploy",
     "dev": "wrangler dev --local"
   },
   "keywords": [],
