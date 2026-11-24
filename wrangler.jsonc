@@ -9,7 +9,7 @@
   "d1_databases": [{ "binding": "DB", "database_name": "alethes-portal", "database_id": "01b197bb-e000-4e52-bde4-5c69ad3cde43" }],
   "vars": {
     // Filled in during setup: your Cloudflare Access team address and the portal application's audience tag.
-    "TEAM_DOMAIN": "",
+    "TEAM_DOMAIN": "https://alethes-portal.cloudflareaccess.com",
     "POLICY_AUD": ""
   }
 }
